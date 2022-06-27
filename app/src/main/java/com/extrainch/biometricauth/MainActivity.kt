@@ -1,60 +1,55 @@
-package com.extrainch.biometricauth;
+package com.extrainch.biometricauth
 
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricPrompt.PromptInfo
+import android.os.Bundle
+import android.view.View
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import com.extrainch.biometricauth.databinding.ActivityMainBinding
+import java.util.concurrent.Executor
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.biometric.BiometricPrompt;
-import androidx.core.content.ContextCompat;
+class MainActivity : AppCompatActivity() {
+    var binding: ActivityMainBinding? = null
+    private var executor: Executor? = null
+    private var biometricPrompt: BiometricPrompt? = null
+    private var promptInfo: PromptInfo? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding!!.root)
+        executor = ContextCompat.getMainExecutor(this)
+        biometricPrompt = BiometricPrompt(
+            this@MainActivity,
+            executor!!,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    binding!!.AuthStatus.text = "Authentication error:$errString"
+                    //                Toast.makeText(MainActivity.this, "Authentication error: " + errString, Toast.LENGTH_SHORT).show();
+                }
 
-import com.extrainch.biometricauth.databinding.ActivityMainBinding;
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    binding!!.AuthStatus.text = "Authentication Successful"
+                    //                Toast.makeText(MainActivity.this, "Authentication error: " + errString, Toast.LENGTH_SHORT).show();
+                }
 
-import java.util.concurrent.Executor;
-
-public class MainActivity extends AppCompatActivity {
-    ActivityMainBinding binding;
-    private Executor executor;
-    private BiometricPrompt biometricPrompt;
-    private BiometricPrompt.PromptInfo promptInfo;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-
-        executor = ContextCompat.getMainExecutor(this);
-        biometricPrompt = new BiometricPrompt(MainActivity.this, executor, new BiometricPrompt.AuthenticationCallback() {
-            @Override
-            public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
-                super.onAuthenticationError(errorCode, errString);
-                binding.AuthStatus.setText("Authentication error:" + errString);
-//                Toast.makeText(MainActivity.this, "Authentication error: " + errString, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
-                super.onAuthenticationSucceeded(result);
-                binding.AuthStatus.setText("Authentication Successful");
-//                Toast.makeText(MainActivity.this, "Authentication error: " + errString, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onAuthenticationFailed() {
-                super.onAuthenticationFailed();
-                binding.AuthStatus.setText("Authentication Failed");
-//                Toast.makeText(MainActivity.this, "Authentication error: " + errString, Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Biometric Authentication")
-                .setSubtitle("Login using fingerprint")
-                .setNegativeButtonText("Use Password")
-                .build();
-
-        binding.FingerPrint.setOnClickListener(v -> biometricPrompt.authenticate(promptInfo));
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    binding!!.AuthStatus.text = "Authentication Failed"
+                    //                Toast.makeText(MainActivity.this, "Authentication error: " + errString, Toast.LENGTH_SHORT).show();
+                }
+            })
+        promptInfo = PromptInfo.Builder()
+            .setTitle("Biometric Authentication")
+            .setSubtitle("Login using fingerprint")
+            .setNegativeButtonText("Use Password")
+            .build()
+        binding!!.FingerPrint.setOnClickListener { v: View? ->
+            biometricPrompt!!.authenticate(
+                promptInfo!!
+            )
+        }
     }
 }
